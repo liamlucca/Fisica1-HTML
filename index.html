@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Física 1 — Entrenador IA</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap');
+  :root {
+    --bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--border:#2a2a2a;
+    --accent:#ff4d00;--accent2:#ffb800;--green:#00ff88;--red:#ff2d55;--blue:#4da6ff;
+    --text:#f0ede8;--muted:#555;--muted2:#333;
+    --mono:'Space Mono',monospace;--display:'Bebas Neue',sans-serif;--body:'Inter',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--body);}
+  .app{display:flex;flex-direction:column;height:100vh;}
+
+  /* ── SETUP ── */
+  .setup{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .setup-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:36px;max-width:520px;width:100%;}
+  .setup-logo{font-family:var(--display);font-size:34px;letter-spacing:3px;color:var(--accent);margin-bottom:4px;}
+  .setup-logo span{color:var(--text);}
+  .setup-sub{font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.6;}
+  .slabel{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;display:block;}
+  .provider-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;}
+  .provider-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;color:var(--text);font-family:var(--body);font-size:12px;text-align:left;transition:all .15s;display:flex;flex-direction:column;gap:3px;}
+  .provider-btn:hover{border-color:var(--muted);}
+  .provider-btn.selected{border-color:var(--accent);background:rgba(255,77,0,.1);}
+  .provider-name{font-weight:600;font-size:13px;}
+  .provider-model{font-family:var(--mono);font-size:9px;color:var(--muted);}
+  .provider-btn.selected .provider-model{color:var(--accent);}
+  .setup-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--mono);font-size:12px;padding:10px 12px;outline:none;transition:border-color .15s;margin-bottom:10px;}
+  .setup-input:focus{border-color:var(--accent);}
+  .setup-input::placeholder{color:var(--muted);font-family:var(--body);font-size:13px;}
+  .setup-links{font-size:11px;color:var(--muted);margin-bottom:20px;line-height:1.9;}
+  .setup-links a{color:var(--accent2);text-decoration:none;}
+  .setup-links a:hover{text-decoration:underline;}
+  .setup-btn{width:100%;background:var(--accent);border:none;border-radius:7px;color:white;font-family:var(--display);font-size:20px;letter-spacing:2px;padding:12px;cursor:pointer;transition:all .15s;}
+  .setup-btn:hover{background:#ff6a2a;}
+  .setup-note{font-size:11px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.6;}
+
+  /* ── HEADER ── */
+  .hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .logo{font-family:var(--display);font-size:20px;letter-spacing:2px;color:var(--accent);}
+  .logo span{color:var(--text);}
+  .hdr-right{display:flex;gap:6px;align-items:center;}
+  .badge{font-family:var(--mono);font-size:9px;padding:3px 7px;border-radius:3px;}
+  .b-orange{background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.3);color:var(--accent2);}
+  .b-green{background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2);color:var(--green);}
+  .b-prov{background:rgba(255,77,0,.1);border:1px solid rgba(255,77,0,.3);color:var(--accent);}
+  .icon-btn{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:3px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .12s;}
+  .icon-btn:hover{color:var(--text);border-color:var(--muted);}
+
+  /* ── BODY ── */
+  .body{display:flex;flex:1;overflow:hidden;}
+
+  /* ── SIDEBAR ── */
+  .sidebar{width:215px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column;}
+  .s-section-lbl{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;padding:10px 12px 4px;}
+  .tbtn{width:calc(100% - 10px);margin:1px 5px;text-align:left;background:transparent;border:1px solid transparent;border-radius:5px;padding:6px 8px;cursor:pointer;color:var(--text);font-size:11px;display:flex;align-items:flex-start;gap:6px;transition:all .12s;line-height:1.3;}
+  .tbtn:hover{background:var(--surface2);border-color:var(--border);}
+  .tbtn.active{background:rgba(255,77,0,.12);border-color:rgba(255,77,0,.4);color:var(--accent);}
+  .tbtn.done{opacity:.4;}
+  .tdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:2px;}
+  .dot-hard{background:var(--red);}.dot-med{background:var(--accent2);}.dot-easy{background:var(--green);}
+  .tname{flex:1;}.tcheck{color:var(--green);font-size:10px;}
+  .sidebar-footer{margin-top:auto;padding:8px 12px;border-top:1px solid var(--border);}
+  .prog-track{background:var(--border);border-radius:100px;height:3px;overflow:hidden;}
+  .prog-fill{height:3px;background:var(--accent);border-radius:100px;transition:width .4s;}
+  .prog-txt{font-family:var(--mono);font-size:9px;color:var(--muted);margin:4px 0 6px;}
+  .clr-btn{width:100%;font-family:var(--mono);font-size:9px;padding:5px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;}
+  .clr-btn:hover{color:var(--red);border-color:var(--red);}
+
+  /* ── MAIN PANEL ── */
+  .main-panel{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+
+  /* TOPIC BAR */
+  .tbar{background:var(--surface2);border-bottom:1px solid var(--border);padding:7px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;}
+  .tbar-name{font-family:var(--display);font-size:17px;letter-spacing:1px;}
+  .dtag{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;letter-spacing:.07em;}
+  .tag-hard{background:rgba(255,45,85,.15);color:var(--red);border:1px solid rgba(255,45,85,.3);}
+  .tag-med{background:rgba(255,184,0,.1);color:var(--accent2);border:1px solid rgba(255,184,0,.25);}
+  .tag-easy{background:rgba(0,255,136,.08);color:var(--green);border:1px solid rgba(0,255,136,.2);}
+
+  /* MODE TABS */
+  .mode-tabs{border-bottom:1px solid var(--border);display:flex;padding:0 16px;gap:0;flex-shrink:0;background:var(--surface);}
+  .mtab{font-family:var(--mono);font-size:10px;padding:10px 14px;border:none;background:transparent;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.06em;transition:all .15s;}
+  .mtab:hover{color:var(--text);}
+  .mtab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+  /* PANELS */
+  .panel{display:none;flex:1;overflow:hidden;flex-direction:column;}
+  .panel.active{display:flex;}
+
+  /* WELCOME */
+  .welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;padding:32px;}
+  .w-icon{font-size:40px;}.w-title{font-family:var(--display);font-size:30px;letter-spacing:3px;color:var(--accent);}
+  .w-sub{font-size:13px;color:var(--muted);line-height:1.7;max-width:320px;}
+
+  /* CHAT */
+  .msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+  .msg{display:flex;gap:9px;animation:fu .22s ease;}
+  @keyframes fu{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+  .msg.user{flex-direction:row-reverse;}
+  .av{width:27px;height:27px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;font-weight:700;flex-shrink:0;}
+  .av-ai{background:rgba(255,77,0,.2);color:var(--accent);border:1px solid rgba(255,77,0,.3);}
+  .av-user{background:rgba(255,184,0,.15);color:var(--accent2);border:1px solid rgba(255,184,0,.3);}
+  .bbl{max-width:78%;padding:10px 14px;border-radius:7px;font-size:13px;line-height:1.75;border:1px solid var(--border);}
+  .bbl-ai{background:var(--surface2);border-radius:2px 7px 7px 7px;}
+  .bbl-user{background:rgba(255,184,0,.06);border-color:rgba(255,184,0,.2);border-radius:7px 2px 7px 7px;}
+  .bbl b{color:var(--accent);}.bbl i{color:var(--accent2);font-style:normal;}
+  .bbl code{font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.06);padding:1px 5px;border-radius:2px;color:var(--accent2);}
+  .ok{color:var(--green);font-weight:700;}.bad{color:var(--red);font-weight:700;}
+  .typing-wrap{display:flex;gap:4px;align-items:center;padding:3px 0;}
+  .tdot2{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bl 1.2s infinite;}
+  .tdot2:nth-child(2){animation-delay:.2s;}.tdot2:nth-child(3){animation-delay:.4s;}
+  @keyframes bl{0%,80%,100%{opacity:.2;transform:scale(.8);}40%{opacity:1;transform:scale(1);}}
+  .inp-area{border-top:1px solid var(--border);padding:10px 16px;background:var(--surface);display:flex;gap:8px;align-items:flex-end;flex-shrink:0;}
+  textarea{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--body);font-size:13px;padding:9px 12px;resize:none;min-height:42px;max-height:110px;outline:none;transition:border-color .15s;line-height:1.5;}
+  textarea:focus{border-color:var(--accent);}
+  textarea::placeholder{color:var(--muted);}
+  .sbtn{background:var(--accent);border:none;border-radius:7px;color:white;width:42px;height:42px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+  .sbtn:hover{background:#ff6a2a;}.sbtn:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* ── MACHETE PANEL ── */
+  .machete-panel{flex:1;overflow-y:auto;padding:20px 24px;}
+  .mach-header{margin-bottom:24px;}
+  .mach-title{font-family:var(--display);font-size:26px;letter-spacing:2px;color:var(--accent);margin-bottom:4px;}
+  .mach-sub{font-size:12px;color:var(--muted);}
+  .mach-section{margin-bottom:28px;}
+  .mach-section-title{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--accent2);text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid var(--muted2);margin-bottom:14px;}
+  .formula-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;}
+  .formula-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
+  .formula-card:hover{border-color:var(--muted);}
+  .formula-eq{font-family:var(--mono);font-size:13px;color:var(--accent2);margin-bottom:5px;line-height:1.5;}
+  .formula-name{font-size:11px;font-weight:600;color:var(--text);margin-bottom:3px;}
+  .formula-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+  .formula-vars{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:5px;line-height:1.6;}
+  .formula-vars span{color:var(--accent2);}
+  .tip-box{background:rgba(255,77,0,.05);border:1px solid rgba(255,77,0,.2);border-radius:8px;padding:12px 14px;margin-bottom:10px;}
+  .tip-box-title{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--accent);text-transform:uppercase;margin-bottom:5px;}
+  .tip-box p{font-size:12px;color:var(--muted);line-height:1.6;}
+  .tip-box p b{color:var(--text);}
+  .no-topic{display:flex;align-items:center;justify-content:center;height:100%;font-size:13px;color:var(--muted);}
+
+  ::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:var(--border);}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══ SETUP ══ -->
+<div class="setup" id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-logo">FÍSICA<span>1</span></div>
+    <div class="setup-sub">Entrenador IA — elegí tu proveedor y pegá tu API Key</div>
+    <span class="slabel">Proveedor de IA</span>
+    <div class="provider-grid">
+      <button class="provider-btn selected" data-id="anthropic" onclick="selProv('anthropic')">
+        <span class="provider-name">🟠 Anthropic</span><span class="provider-model">claude-sonnet-4</span>
+      </button>
+      <button class="provider-btn" data-id="openai" onclick="selProv('openai')">
+        <span class="provider-name">⚪ OpenAI</span><span class="provider-model">gpt-4o-mini</span>
+      </button>
+      <button class="provider-btn" data-id="gemini" onclick="selProv('gemini')">
+        <span class="provider-name">🔵 Google Gemini</span><span class="provider-model">gemini-2.0-flash</span>
+      </button>
+      <button class="provider-btn" data-id="groq" onclick="selProv('groq')">
+        <span class="provider-name">🟣 Meta / Groq</span><span class="provider-model">llama-3.3-70b</span>
+      </button>
+      <button class="provider-btn" data-id="xai" onclick="selProv('xai')">
+        <span class="provider-name">⚫ xAI Grok</span><span class="provider-model">grok-3-mini</span>
+      </button>
+    </div>
+    <span class="slabel">API Key</span>
+    <input class="setup-input" id="api-key-input" type="password" placeholder="Pegá tu API Key acá...">
+    <div class="setup-links">
+      🟠 Anthropic: <a href="https://console.anthropic.com/keys" target="_blank">console.anthropic.com/keys</a><br>
+      ⚪ OpenAI: <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a><br>
+      🔵 Gemini (gratis): <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a><br>
+      🟣 Groq (gratis): <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a><br>
+      ⚫ xAI Grok: <a href="https://console.x.ai" target="_blank">console.x.ai</a>
+    </div>
+    <button class="setup-btn" onclick="startApp()">ARRANCAR ⚡</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:12px;">
+      <div style="flex:1;height:1px;background:var(--border);"></div>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;">O BIEN</span>
+      <div style="flex:1;height:1px;background:var(--border);"></div>
+    </div>
+    <button class="setup-btn" onclick="startNoAI()" style="margin-top:12px;background:var(--muted2);border:1px solid var(--border);font-size:16px;">USAR SIN IA — SOLO MACHETES</button>
+    <div class="setup-note">Tu API Key se guarda solo en tu computadora (localStorage).<br>Nunca se envía a ningún servidor externo.</div>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div id="main-app" style="display:none;flex-direction:column;height:100vh;">
+  <div class="hdr">
+    <div class="logo">FÍSICA<span>1</span> — ENTRENADOR IA</div>
+    <div class="hdr-right">
+      <div class="badge b-prov" id="prov-badge">—</div>
+      <div class="badge b-orange">⚡ PONETE LAS PILAS</div>
+      <div class="badge b-green" id="streak-b">🔥 RACHA: 0</div>
+      <button class="icon-btn" onclick="resetKey()">⚙ CAMBIAR KEY</button>
+    </div>
+  </div>
+  <div class="body">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="s-section-lbl">Temas</div>
+      <div id="tema-list"></div>
+      <div class="sidebar-footer">
+        <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+        <div class="prog-txt" id="prog-txt">0 / 16 temas</div>
+        <button class="clr-btn" onclick="clearHistory()">🗑 BORRAR HISTORIAL</button>
+      </div>
+    </div>
+
+    <!-- MAIN PANEL -->
+    <div class="main-panel">
+      <!-- TOPIC BAR -->
+      <div class="tbar" id="tbar" style="display:none">
+        <div class="tbar-name" id="tbar-name">—</div>
+        <div class="dtag" id="dtag">—</div>
+      </div>
+
+      <!-- MODE TABS -->
+      <div class="mode-tabs" id="mode-tabs" style="display:none">
+        <button class="mtab active" id="tab-explicar" onclick="setTab('explicar')">EXPLICAR</button>
+        <button class="mtab" id="tab-ejercicio" onclick="setTab('ejercicio')">EJERCICIO</button>
+        <button class="mtab" id="tab-quiz" onclick="setTab('quiz')">QUIZ</button>
+        <button class="mtab" id="tab-machete" onclick="setTab('machete')">📐 MACHETE</button>
+      </div>
+
+      <!-- WELCOME -->
+      <div class="welcome" id="welcome">
+        <div class="w-icon">⚡</div>
+        <div class="w-title">A ESTUDIAR</div>
+        <div class="w-sub">DALE PONETE LAS PILAS. SIN EXCUSAS.<br>Elegí un tema a la izquierda para arrancar.</div>
+      </div>
+
+      <!-- CHAT PANEL (explicar / ejercicio / quiz) -->
+      <div class="panel" id="panel-chat">
+        <div class="msgs" id="msgs"></div>
+        <div class="inp-area">
+          <textarea id="inp" placeholder="Escribí tu respuesta o pregunta..." rows="1"
+            onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="sbtn" id="sbtn" onclick="send()">↑</button>
+        </div>
+      </div>
+
+      <!-- MACHETE PANEL -->
+      <div class="panel" id="panel-machete">
+        <div class="machete-panel" id="machete-content">
+          <div class="no-topic">Elegí un tema para ver su machete.</div>
+        </div>
+      </div>
+
+    </div><!-- /main-panel -->
+  </div><!-- /body -->
+</div><!-- /main-app -->
+</div><!-- /app -->
+
+<script>
+// ══════════════════════════════════════════════
+// PROVIDERS
+// ══════════════════════════════════════════════
+const PROVIDERS={
+  anthropic:{name:"Anthropic",emoji:"🟠",model:"claude-sonnet-4-20250514"},
+  openai:   {name:"OpenAI",   emoji:"⚪",model:"gpt-4o-mini"},
+  gemini:   {name:"Gemini",   emoji:"🔵",model:"gemini-2.0-flash"},
+  groq:     {name:"Groq",     emoji:"🟣",model:"llama-3.3-70b-versatile"},
+  xai:      {name:"xAI Grok", emoji:"⚫",model:"grok-3-mini"},
+};
+
+// ══════════════════════════════════════════════
+// TEMAS
+// ══════════════════════════════════════════════
+const TEMAS=[
+  {
+    name:"Cinemática",diff:"easy",label:"FÁCIL",
+    machete:{
+      intro:"Estudia el movimiento sin preocuparse por sus causas. Todo se basa en posición, velocidad y aceleración en función del tiempo.",
+      sections:[
+        {title:"Movimiento Rectilíneo Uniforme (MRU)",formulas:[
+          {eq:"x = x₀ + v·t",name:"Posición en MRU",desc:"La posición varía linealmente con el tiempo.",vars:"x=posición final · x₀=posición inicial · v=velocidad constante · t=tiempo"},
+          {eq:"v = Δx/Δt = cte",name:"Velocidad constante",desc:"En MRU la velocidad no cambia.",vars:"Δx=desplazamiento · Δt=intervalo de tiempo"},
+        ]},
+        {title:"Movimiento Rectilíneo Uniformemente Variado (MRUV)",formulas:[
+          {eq:"v = v₀ + a·t",name:"Velocidad en función del tiempo",desc:"Velocidad cambia linealmente con la aceleración.",vars:"v=velocidad final · v₀=velocidad inicial · a=aceleración · t=tiempo"},
+          {eq:"x = x₀ + v₀·t + ½·a·t²",name:"Posición en función del tiempo",desc:"Ecuación principal del MRUV.",vars:"Incluye todos los términos cinemáticos"},
+          {eq:"v² = v₀² + 2·a·Δx",name:"Sin tiempo (ecuación de Torricelli)",desc:"Útil cuando no tenés el tiempo pero sí el desplazamiento.",vars:"v²=velocidad² final · v₀²=velocidad² inicial · Δx=desplazamiento"},
+          {eq:"x = (v₀+v)/2 · t",name:"Con velocidad promedio",desc:"Equivalente a las anteriores, útil para verificar.",vars:"Promedio de velocidades × tiempo"},
+        ]},
+        {title:"Caída Libre y Tiro Vertical",formulas:[
+          {eq:"a = g = 9.8 m/s²  (↓ positivo)",name:"Aceleración gravitacional",desc:"La gravedad es constante cerca de la superficie terrestre.",vars:"g=9.8 m/s² siempre positivo hacia abajo"},
+          {eq:"v = v₀ - g·t  (tiro hacia arriba)",name:"Tiro vertical hacia arriba",desc:"Se resta g si el objeto sube.",vars:"v₀=velocidad inicial hacia arriba (positiva)"},
+          {eq:"h = v₀·t - ½·g·t²",name:"Altura en tiro vertical",desc:"La altura máxima se alcanza cuando v=0.",vars:"h=altura · usar v=0 para encontrar t en el punto más alto"},
+          {eq:"t_subida = v₀/g",name:"Tiempo hasta la altura máxima",desc:"Despejando t cuando v=0.",vars:""},
+        ]},
+        {title:"Consejos clave",tips:[
+          "<b>Elegí un sistema de referencia</b> antes de escribir cualquier ecuación. Definí qué dirección es positiva.",
+          "<b>El signo de g:</b> si positivo es hacia abajo, g=+9.8. Si positivo es hacia arriba, g=−9.8.",
+          "<b>En el punto más alto</b> de un tiro vertical, v=0 (solo en ese instante). La aceleración sigue siendo g.",
+          "<b>Tiempo de subida = tiempo de bajada</b> si el objeto regresa al mismo punto.",
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Dinámica",diff:"med",label:"MEDIO",
+    machete:{
+      intro:"Estudia las causas del movimiento (fuerzas). La herramienta central es el Diagrama de Cuerpo Libre (DCL).",
+      sections:[
+        {title:"Leyes de Newton",formulas:[
+          {eq:"ΣF = 0  →  a = 0",name:"Primera Ley (Inercia)",desc:"Si la sumatoria de fuerzas es cero, el objeto está en reposo o MRU.",vars:"Un objeto no cambia su estado de movimiento sin una fuerza neta"},
+          {eq:"ΣF = m·a",name:"Segunda Ley (Fundamental)",desc:"La fuerza neta es igual a masa por aceleración.",vars:"ΣF=fuerza neta [N] · m=masa [kg] · a=aceleración [m/s²]"},
+          {eq:"F₁₂ = −F₂₁",name:"Tercera Ley (Acción-Reacción)",desc:"Las fuerzas de acción y reacción son iguales, opuestas y actúan sobre cuerpos distintos.",vars:"Se aplican en cuerpos DIFERENTES, nunca en el mismo"},
+        ]},
+        {title:"Fuerzas comunes",formulas:[
+          {eq:"P = m·g",name:"Peso",desc:"Fuerza gravitacional sobre el objeto. Siempre apunta hacia abajo.",vars:"m=masa [kg] · g=9.8 m/s²"},
+          {eq:"N = m·g·cos(θ)  (plano inclinado)",name:"Normal en plano inclinado",desc:"La normal es perpendicular a la superficie.",vars:"θ=ángulo de inclinación del plano"},
+          {eq:"f = μ·N",name:"Fricción",desc:"Se opone al movimiento relativo entre superficies.",vars:"μ=coeficiente de fricción (adimensional) · N=fuerza normal · μₛ>μₖ siempre"},
+          {eq:"T = misma en toda la cuerda ideal",name:"Tensión",desc:"En una cuerda sin masa e inextensible, la tensión es uniforme.",vars:"Si la polea es ideal (sin masa y sin fricción), T es igual en ambos lados"},
+        ]},
+        {title:"Plano inclinado — componentes",formulas:[
+          {eq:"F‖ = m·g·sin(θ)  (paralela al plano)",name:"Componente del peso paralela",desc:"Es la que 'tira' del objeto cuesta abajo.",vars:"θ=ángulo del plano con la horizontal"},
+          {eq:"F⊥ = m·g·cos(θ)  (perpendicular al plano)",name:"Componente del peso perpendicular",desc:"Es la que genera la fuerza normal.",vars:"N = m·g·cos(θ) si no hay fuerzas adicionales perpendiculares"},
+        ]},
+        {title:"Procedimiento DCL",tips:[
+          "<b>Paso 1:</b> Dibujá el objeto como un punto o caja simple.",
+          "<b>Paso 2:</b> Dibujá TODAS las fuerzas con vectores: Peso (↓), Normal (⊥ superficie), Tensión (dirección de la cuerda), Fricción (opuesta al movimiento).",
+          "<b>Paso 3:</b> Elegí ejes convenientes. En plano inclinado, poné un eje paralelo y otro perpendicular al plano.",
+          "<b>Paso 4:</b> Aplicá ΣFx=m·ax y ΣFy=m·ay en cada dirección.",
+          "<b>Paso 5:</b> Resolvé el sistema de ecuaciones.",
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Trabajo y Energía",diff:"med",label:"MEDIO",
+    machete:{
+      intro:"El Teorema Trabajo-Energía conecta las fuerzas con el cambio en energía cinética. La conservación de energía evita resolver ecuaciones de movimiento.",
+      sections:[
+        {title:"Trabajo",formulas:[
+          {eq:"W = F·d·cos(θ)",name:"Trabajo de una fuerza",desc:"Solo la componente paralela al desplazamiento realiza trabajo.",vars:"F=magnitud de la fuerza [N] · d=desplazamiento [m] · θ=ángulo entre F y d · [W]=Joule=N·m"},
+          {eq:"W > 0  si θ < 90°  (a favor del movimiento)",name:"Trabajo positivo",desc:"La fuerza ayuda al movimiento.",vars:""},
+          {eq:"W < 0  si θ > 90°  (contra el movimiento)",name:"Trabajo negativo",desc:"La fricción siempre hace trabajo negativo.",vars:""},
+          {eq:"W = 0  si θ = 90°  (perpendicular)",name:"Trabajo nulo",desc:"Normal y fuerza centrípeta no realizan trabajo.",vars:""},
+        ]},
+        {title:"Energía Cinética y Potencial",formulas:[
+          {eq:"Ec = ½·m·v²",name:"Energía cinética",desc:"Energía asociada al movimiento. Siempre ≥ 0.",vars:"m=masa [kg] · v=velocidad [m/s] · [Ec]=Joule"},
+          {eq:"Ep_grav = m·g·h",name:"Energía potencial gravitatoria",desc:"Depende del nivel de referencia elegido (donde h=0).",vars:"h=altura respecto al nivel de referencia · puede ser negativa"},
+          {eq:"Ep_elast = ½·k·x²",name:"Energía potencial elástica",desc:"Energía almacenada en un resorte deformado.",vars:"k=constante del resorte [N/m] · x=deformación [m]"},
+        ]},
+        {title:"Teoremas fundamentales",formulas:[
+          {eq:"Wtotal = ΔEc = Ec_f − Ec_i",name:"Teorema Trabajo-Energía",desc:"El trabajo total neto es igual al cambio en energía cinética.",vars:"Incluye el trabajo de TODAS las fuerzas"},
+          {eq:"Em = Ec + Ep = constante  (sin rozamiento)",name:"Conservación de Energía Mecánica",desc:"Si no hay fricción ni fuerzas externas no conservativas, la energía mecánica total se conserva.",vars:"Em_i = Em_f  →  ½mv₀²+mgh₀ = ½mv²+mgh"},
+          {eq:"W_nc = ΔEm = Em_f − Em_i",name:"Con fuerzas no conservativas",desc:"El trabajo de la fricción (negativo) reduce la energía mecánica.",vars:"W_nc=trabajo de fuerzas no conservativas (fricción, empuje, etc.)"},
+        ]},
+        {title:"Consejos clave",tips:[
+          "<b>Elegí bien el nivel h=0.</b> Podés poner h=0 donde quieras; elige el punto más bajo del sistema.",
+          "<b>Fricción:</b> siempre reduce Em. W_friccion = −f·d (negativo).",
+          "<b>Para velocidades:</b> usar conservación es mucho más rápido que las ecuaciones cinemáticas.",
+          "<b>¿Cuándo NO se conserva Em?</b> Cuando hay fricción, impactos, o fuerzas externas que hacen trabajo.",
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Potencia",diff:"easy",label:"FÁCIL",
+    machete:{
+      intro:"La potencia mide qué tan rápido se realiza trabajo o se transfiere energía.",
+      sections:[
+        {title:"Fórmulas de Potencia",formulas:[
+          {eq:"P = W/t",name:"Potencia media",desc:"Trabajo realizado por unidad de tiempo.",vars:"P=potencia [W=Watt] · W=trabajo [J] · t=tiempo [s]"},
+          {eq:"P = F·v·cos(θ)",name:"Potencia instantánea",desc:"Cuando la fuerza y velocidad son conocidas en un instante.",vars:"F=fuerza · v=velocidad · θ=ángulo entre ambos"},
+          {eq:"P = F·v  (si F paralela a v)",name:"Caso más común",desc:"Cuando la fuerza es paralela al movimiento.",vars:""},
+          {eq:"1 HP = 746 W  ≈ 0.75 kW",name:"Conversión Horsepower",desc:"Unidad antigua todavía usada en motores.",vars:"1 kW = 1000 W"},
+        ]},
+        {title:"Consejo",tips:[
+          "<b>En problemas de motores:</b> P = F·v. Si el vehículo va a velocidad constante, la fuerza del motor iguala a la fricción.",
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Cantidad de Movimiento e Impulso",diff:"hard",label:"DIFÍCIL",
+    machete:{
+      intro:"El momento lineal (momentum) es la cantidad de movimiento de un objeto. El impulso es el cambio en momentum. Son VECTORES — siempre considerá signos.",
+      sections:[
+        {title:"Momentum e Impulso",formulas:[
+          {eq:"p = m·v",name:"Momento lineal (momentum)",desc:"Vector en la dirección de la velocidad.",vars:"p=momentum [kg·m/s] · m=masa · v=velocidad (vector)"},
+          {eq:"J = F·Δt",name:"Impulso",desc:"Fuerza aplicada durante un tiempo. Igual al cambio en momentum.",vars:"J=impulso [N·s=kg·m/s] · F=fuerza promedio · Δt=tiempo de actuación"},
+          {eq:"J = Δp = p_f − p_i = m·v_f − m·v_i",name:"Teorema Impulso-Momentum",desc:"El impulso es igual al cambio en momentum.",vars:"Es la forma integrada de la Segunda Ley de Newton"},
+          {eq:"ΣF = Δp/Δt",name:"Segunda Ley en términos de momentum",desc:"Forma más general de la Segunda Ley.",vars:""},
+        ]},
+        {title:"Conservación del Momentum",formulas:[
+          {eq:"ΣF_ext = 0  →  p_total = constante",name:"Conservación del Momentum",desc:"Si no hay fuerzas externas netas, el momentum total del sistema se conserva.",vars:"Se aplica a sistemas de partículas aislados"},
+          {eq:"m₁·v₁ᵢ + m₂·v₂ᵢ = m₁·v₁f + m₂·v₂f",name:"En sistema de 2 cuerpos",desc:"Antes del choque = después del choque (en momentum total).",vars:"Siempre vectorial — cuidá los signos de dirección"},
+        ]},
+        {title:"Consejos clave",tips:[
+          "<b>VECTORES:</b> definí positivo y negativo antes. Si un objeto va a la izquierda, su p es negativo.",
+          "<b>Impulso en colisiones cortas:</b> aunque la fuerza sea enorme, si Δt es muy pequeño, J puede ser moderado.",
+          "<b>Conservación vs Trabajo-Energía:</b> en colisiones usá conservación de momentum. La energía cinética solo se conserva en choques elásticos.",
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Choques",diff:"hard",label:"DIFÍCIL",
+    machete:{
+      intro:"Los choques son interacciones muy rápidas. El momentum SIEMPRE se conserva. La energía cinética solo en choques elásticos.",
+      sections:[
+        {title:"Tipos de choques",formulas:[
+          {eq:"p_total conservado  +  Ec conservada",name:"Choque Elástico",desc:"Rebote perfecto. Las bolas de billar se aproximan a esto.",vars:"m₁v₁ᵢ+m₂v₂ᵢ=m₁v₁f+m₂v₂f  Y  ½m₁v₁ᵢ²+½m₂v₂ᵢ²=½m₁v₁f²+½m₂v₂f²"},
+          {eq:"p_total conservado  +  Ec NO conservada",name:"Choque Inelástico",desc:"La mayoría de los choques reales. Se pierde energía cinética (calor, deformación).",vars:"Solo usás conservación de momentum"},
+          {eq:"m₁·v₁ᵢ + m₂·v₂ᵢ = (m₁+m₂)·v_f",name:"Choque Perfectamente Inelástico",desc:"Los objetos quedan pegados y se mueven juntos. Máxima pérdida de Ec.",vars:"v_f = (m₁v₁ᵢ+m₂v₂ᵢ)/(m₁+m₂)"},
+        ]},
+        {title:"Choque elástico — velocidades finales",formulas:[
+          {eq:"v₁f = ((m₁−m₂)v₁ᵢ + 2m₂v₂ᵢ) / (m₁+m₂)",name:"Velocidad final objeto 1 (elástico)",desc:"Fórmula directa para 1D.",vars:""},
+          {eq:"v₂f = ((m₂−m₁)v₂ᵢ + 2m₁v₁ᵢ) / (m₁+m₂)",name:"Velocidad final objeto 2 (elástico)",desc:"Fórmula directa para 1D.",vars:""},
+          {eq:"Caso m₁=m₂: v₁f=v₂ᵢ  y  v₂f=v₁ᵢ",name:"Masas iguales (elástico)",desc:"Los objetos intercambian velocidades. Muy común en problemas.",vars:""},
+          {eq:"v₁f + v₁i = v₂i + v₂f", name:"Fórmula de Velocidad Relativa",desc:"Solo para choques perfectamente elásticos",vars:""},
+        ]},
+        {title:"Coeficiente de Restitución",formulas:[
+          {eq:"e = |v_separación| / |v_aproximación| = |v₂f−v₁f| / |v₁ᵢ−v₂ᵢ|",name:"Coeficiente de restitución",desc:"e=1 elástico · 0<e<1 inelástico · e=0 perfectamente inelástico.",vars:""},
+        ]},
+        {title:"Consejos clave",tips:[
+          "<b>Primero identificá</b> qué tipo de choque es. Si dice 'quedan juntos' → perfectamente inelástico.",
+          "<b>Siempre definí signos</b> antes. Derecha=positivo, izquierda=negativo.",
+          "<b>Verificá con energía:</b> calculá Ec antes y después. En inelástico, ΔEc<0 (se pierde energía).",
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Centro de Masa",diff:"med",label:"MEDIO",
+    machete:{
+      intro:"El centro de masa (CM) es el punto donde toda la masa del sistema puede considerarse concentrada. Es el punto que sigue las Leyes de Newton para fuerzas externas.",
+      sections:[
+        {title:"Posición del CM",formulas:[
+          {eq:"x_cm = Σ(mᵢ·xᵢ) / M_total",name:"CM en 1D",desc:"Promedio ponderado de posiciones por masa.",vars:"mᵢ=masa de cada objeto · xᵢ=posición de cada objeto · M=masa total"},
+          {eq:"x_cm = (m₁x₁+m₂x₂+m₃x₃+...) / (m₁+m₂+m₃+...)",name:"Forma expandida",desc:"Para sistema discreto de partículas.",vars:""},
+          {eq:"r_cm = Σ(mᵢ·rᵢ) / M  (vector en 2D/3D)",name:"CM en 2D o 3D",desc:"Se aplica separadamente en x, y (y z).",vars:""},
+        ]},
+        {title:"Velocidad y Aceleración del CM",formulas:[
+          {eq:"v_cm = Σ(mᵢ·vᵢ) / M",name:"Velocidad del CM",desc:"Promedio ponderado de velocidades.",vars:""},
+          {eq:"a_cm = ΣF_externas / M",name:"Aceleración del CM",desc:"Solo las fuerzas EXTERNAS aceleran el CM. Las internas se cancelan.",vars:"ΣF_ext=suma de fuerzas externas al sistema"},
+          {eq:"p_total = M·v_cm",name:"Momentum del sistema",desc:"El momentum total es masa total × velocidad del CM.",vars:""},
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Rotación de Cuerpos Rígidos",diff:"hard",label:"DIFÍCIL",
+    machete:{
+      intro:"La rotación tiene un análogo exacto con la traslación. Aprendé la tabla de analogías y la rotación se vuelve familiar.",
+      sections:[
+        {title:"Analogías Traslación ↔ Rotación",formulas:[
+          {eq:"x  ↔  θ  (desplazamiento → ángulo)",name:"Posición",desc:"El ángulo θ en radianes es el análogo al desplazamiento.",vars:""},
+          {eq:"v  ↔  ω  (velocidad → velocidad angular)",name:"Velocidad",desc:"ω en rad/s.",vars:""},
+          {eq:"a  ↔  α  (aceleración → aceleración angular)",name:"Aceleración",desc:"α en rad/s².",vars:""},
+          {eq:"m  ↔  I  (masa → momento de inercia)",name:"Inercia",desc:"El momento de inercia I depende de la distribución de masa.",vars:""},
+          {eq:"F  ↔  τ  (fuerza → torque)",name:"Causa del movimiento",desc:"",vars:""},
+        ]},
+        {title:"Cinemática Rotacional (igual que MRUV)",formulas:[
+          {eq:"ω = ω₀ + α·t",name:"Velocidad angular",desc:"Igual que v=v₀+at.",vars:"ω=velocidad angular final · ω₀=inicial · α=aceleración angular · t=tiempo"},
+          {eq:"θ = θ₀ + ω₀·t + ½·α·t²",name:"Posición angular",desc:"Igual que x=x₀+v₀t+½at².",vars:"θ en radianes"},
+          {eq:"ω² = ω₀² + 2·α·Δθ",name:"Sin tiempo",desc:"Análogo a v²=v₀²+2aΔx.",vars:""},
+        ]},
+        {title:"Relaciones angular-lineal",formulas:[
+          {eq:"v = ω·r",name:"Velocidad lineal",desc:"Velocidad del punto en el borde del sólido.",vars:"r=distancia al eje de rotación"},
+          {eq:"a_t = α·r",name:"Aceleración tangencial",desc:"Componente tangencial de la aceleración.",vars:""},
+          {eq:"a_c = ω²·r = v²/r",name:"Aceleración centrípeta",desc:"Apunta hacia el centro del eje.",vars:""},
+        ]},
+        {title:"Momentos de Inercia comunes",formulas:[
+          {eq:"I = m·r²",name:"Partícula puntual",desc:"Masa concentrada a distancia r del eje.",vars:""},
+          {eq:"I = ½·m·R²",name:"Disco sólido / Cilindro sólido",desc:"Eje en el centro, perpendicular al plano.",vars:"R=radio"},
+          {eq:"I = m·R²",name:"Aro / Cilindro hueco",desc:"Toda la masa en el borde.",vars:"R=radio"},
+          {eq:"I = 2/5·m·R²",name:"Esfera sólida",desc:"Eje por el centro.",vars:"R=radio"},
+          {eq:"I = 2/3·m·R²",name:"Esfera hueca",desc:"Eje por el centro.",vars:"R=radio"},
+          {eq:"I = 1/12·m·L²",name:"Barra delgada (eje en el centro)",desc:"Eje perpendicular a la barra.",vars:"L=longitud"},
+          {eq:"I = 1/3·m·L²",name:"Barra delgada (eje en un extremo)",desc:"",vars:""},
+          {eq:"I_P = I_cm + m·d²",name:"Teorema de Steiner (ejes paralelos)",desc:"Para trasladar el eje de rotación.",vars:"d=distancia entre el eje por el CM y el nuevo eje"},
+        ]},
+        {title:"Dinámica Rotacional",formulas:[
+          {eq:"Στ = I·α",name:"Segunda Ley Rotacional",desc:"Análogo a ΣF=m·a.",vars:"τ=torque · I=momento de inercia · α=aceleración angular"},
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Torque",diff:"hard",label:"DIFÍCIL",
+    machete:{
+      intro:"El torque (momento de fuerza) es la causa de la rotación. Depende de la fuerza, su distancia al eje y el ángulo entre ambos.",
+      sections:[
+        {title:"Definición de Torque",formulas:[
+          {eq:"τ = r·F·sin(θ)",name:"Torque escalar",desc:"r es la distancia del eje al punto de aplicación; θ es el ángulo entre r y F.",vars:"τ [N·m] · r [m] · F [N] · θ=ángulo entre el vector posición y la fuerza"},
+          {eq:"τ = F·d_⊥",name:"Con brazo de palanca",desc:"d_⊥ es la distancia perpendicular (brazo de palanca) entre el eje y la línea de acción de F.",vars:"d_⊥ = r·sin(θ)  ←  es el brazo de palanca"},
+          {eq:"τ = r × F  (producto vectorial)",name:"Torque vectorial",desc:"La dirección (horario/antihorario) se determina con la regla de la mano derecha.",vars:"Antihorario = positivo (convención usual)"},
+        ]},
+        {title:"Equilibrio",formulas:[
+          {eq:"ΣF = 0  (equilibrio traslacional)",name:"Primera condición de equilibrio",desc:"La resultante de fuerzas es cero.",vars:""},
+          {eq:"Στ = 0  (equilibrio rotacional)",name:"Segunda condición de equilibrio",desc:"La suma de torques respecto a CUALQUIER punto es cero.",vars:"Elegí como pivote el punto con más fuerzas desconocidas para simplificar"},
+          {eq:"Στ = I·α  (si no está en equilibrio)",name:"Caso dinámico",desc:"Si hay aceleración angular.",vars:""},
+        ]},
+        {title:"Consejos clave",tips:[
+          "<b>Pivote conveniente:</b> siempre elegí como pivote el punto donde actúe la fuerza desconocida — así esa fuerza no aparece en la ecuación de torques.",
+          "<b>Signo del torque:</b> antihorario=positivo, horario=negativo (o al revés, pero sé consistente).",
+          "<b>Brazo de palanca:</b> es la distancia PERPENDICULAR de la línea de acción de la fuerza al eje.",
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Trabajo y Potencia en la Rotación",diff:"hard",label:"DIFÍCIL",
+    machete:{
+      intro:"Las expresiones de trabajo y potencia en rotación son análogas a las de traslación, reemplazando F→τ, d→θ, v→ω.",
+      sections:[
+        {title:"Trabajo y Energía Rotacional",formulas:[
+          {eq:"W_rot = τ·Δθ",name:"Trabajo en rotación",desc:"Análogo a W=F·d. Θ debe estar en radianes.",vars:"τ=torque constante · Δθ=desplazamiento angular [rad]"},
+          {eq:"Ec_rot = ½·I·ω²",name:"Energía cinética rotacional",desc:"Análogo a Ec=½mv². Siempre positiva.",vars:"I=momento de inercia · ω=velocidad angular [rad/s]"},
+          {eq:"P_rot = τ·ω",name:"Potencia en rotación",desc:"Análogo a P=F·v.",vars:"τ=torque · ω=velocidad angular"},
+          {eq:"Em_total = ½·m·v² + ½·I·ω² + m·g·h",name:"Energía mecánica total (con rotación)",desc:"Para un cuerpo que rota Y traslada simultáneamente.",vars:"Aplica al rodamiento, péndulo físico, etc."},
+        ]},
+        {title:"Teorema Trabajo-Energía Rotacional",formulas:[
+          {eq:"W_total = ΔEc_rot = ½·I·ω_f² − ½·I·ω_i²",name:"Trabajo neto = cambio en Ec rotacional",desc:"Análogo al teorema traslacional.",vars:""},
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Rodamiento sin deslizamiento",diff:"hard",label:"DIFÍCIL",
+    machete:{
+      intro:"Un objeto rueda sin deslizar cuando la velocidad del punto de contacto con el suelo es CERO. Esto vincula traslación y rotación.",
+      sections:[
+        {title:"Condición de rodadura",formulas:[
+          {eq:"v_cm = ω·R",name:"Condición de rodadura (velocidades)",desc:"La velocidad del centro de masa está vinculada a la velocidad angular.",vars:"v_cm=velocidad del centro · ω=velocidad angular · R=radio"},
+          {eq:"a_cm = α·R",name:"Condición de rodadura (aceleraciones)",desc:"La aceleración del CM vinculada a la aceleración angular.",vars:""},
+          {eq:"v_contacto = 0",name:"Punto de contacto",desc:"El punto que toca el suelo está instantáneamente en reposo.",vars:""},
+          {eq:"v_tope = 2·v_cm",name:"Punto más alto",desc:"El punto opuesto al contacto va al doble de v_cm.",vars:""},
+        ]},
+        {title:"Energía en el rodamiento",formulas:[
+          {eq:"Ec_total = ½·m·v_cm² + ½·I·ω²",name:"Energía cinética total",desc:"Suma de traslación y rotación.",vars:""},
+          {eq:"Sustituyendo ω=v_cm/R:  Ec = ½·m·v²·(1 + I/mR²)",name:"En función de v_cm",desc:"Útil para comparar qué cuerpo rueda más rápido.",vars:"Cuerpo con menor I/mR² llega más rápido al final de un plano inclinado"},
+        ]},
+        {title:"Rodamiento en plano inclinado",formulas:[
+          {eq:"a_cm = g·sin(θ) / (1 + I/mR²)",name:"Aceleración en plano inclinado",desc:"Menor que la de deslizamiento puro (g·sin θ).",vars:"Para disco: a=2/3·g·sin(θ) · Para esfera: a=5/7·g·sin(θ)"},
+        ]},
+        {title:"Consejos clave",tips:[
+          "<b>La fricción en rodadura</b> no realiza trabajo (el punto de contacto no se mueve), pero sí proporciona el torque que causa la rotación.",
+          "<b>Orden de rapidez en plano inclinado (de más rápido a más lento):</b> objeto deslizante (sin rodar) > esfera > cilindro sólido > cilindro hueco.",
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Cantidad de Movimiento Angular",diff:"hard",label:"DIFÍCIL",
+    machete:{
+      intro:"El momento angular L es el análogo rotacional del momentum lineal p. Si no hay torque externo, L se conserva — este es uno de los principios más elegantes de la física.",
+      sections:[
+        {title:"Definición",formulas:[
+          {eq:"L = I·ω",name:"Momento angular (cuerpo rígido)",desc:"Análogo a p=m·v.",vars:"L [kg·m²/s] · I=momento de inercia · ω=velocidad angular"},
+          {eq:"L = m·v·r·sin(θ)  =  r × p",name:"Momento angular (partícula)",desc:"Para una partícula moviéndose respecto a un punto.",vars:"r=distancia al punto de referencia · θ=ángulo entre r y v"},
+          {eq:"τ = dL/dt = ΔL/Δt",name:"Torque como cambio en L",desc:"Análogo a F=dp/dt.",vars:""},
+        ]},
+        {title:"Conservación",formulas:[
+          {eq:"Si Στ_ext = 0  →  L_total = constante",name:"Conservación del Momento Angular",desc:"Si no hay torque externo neto, L no cambia.",vars:""},
+          {eq:"I₁·ω₁ = I₂·ω₂",name:"Forma práctica",desc:"El patinador que junta los brazos: disminuye I, aumenta ω.",vars:"I₁, ω₁=estado inicial · I₂, ω₂=estado final"},
+        ]},
+        {title:"Consejos clave",tips:[
+          "<b>El patinador:</b> al juntar los brazos, I disminuye → ω aumenta (gira más rápido). Al abrir brazos, I aumenta → ω disminuye.",
+          "<b>Conservación de L no implica conservación de Ec</b> rotacional. La Ec puede cambiar (el patinador usa energía muscular).",
+          "<b>Dirección:</b> usa la regla de la mano derecha para el vector L.",
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Mecánica de Fluidos: Hidrostática",diff:"med",label:"MEDIO",
+    machete:{
+      intro:"Estudio de fluidos en reposo. Las variables clave son presión, densidad y la fuerza de empuje (Arquímedes).",
+      sections:[
+        {title:"Presión",formulas:[
+          {eq:"P = F/A",name:"Definición de presión",desc:"Fuerza perpendicular por unidad de área.",vars:"P [Pa=N/m²] · F [N] · A [m²]"},
+          {eq:"P = ρ·g·h",name:"Presión hidrostática",desc:"Presión debida a una columna de fluido de altura h.",vars:"ρ=densidad del fluido [kg/m³] · h=profundidad desde la superficie"},
+          {eq:"P_total = P_atm + ρ·g·h",name:"Presión absoluta",desc:"La presión total incluye la presión atmosférica en la superficie.",vars:"P_atm ≈ 1.013×10⁵ Pa = 101.3 kPa"},
+        ]},
+        {title:"Principio de Arquímedes",formulas:[
+          {eq:"F_B = ρ_fluido·g·V_sumergido",name:"Fuerza de empuje (Arquímedes)",desc:"Todo cuerpo sumergido experimenta una fuerza hacia arriba igual al peso del fluido desplazado.",vars:"ρ_fluido=densidad del fluido · V_sum=volumen sumergido (no el total si flota parcialmente)"},
+          {eq:"Objeto flota si  ρ_objeto < ρ_fluido",name:"Condición de flotación",desc:"Si la densidad del objeto es menor que la del fluido, flota.",vars:""},
+          {eq:"Objeto se hunde si  ρ_objeto > ρ_fluido",name:"Condición de hundimiento",desc:"",vars:""},
+          {eq:"Flotando: F_B = P_objeto  →  ρ_obj·V_total = ρ_fluido·V_sum",name:"Equilibrio al flotar",desc:"El empuje iguala al peso cuando el objeto flota.",vars:"V_sum < V_total  (solo parte sumergida)"},
+        ]},
+        {title:"Principio de Pascal",formulas:[
+          {eq:"ΔP = F₁/A₁ = F₂/A₂",name:"Prensa hidráulica",desc:"Un aumento de presión en un punto de un fluido confinado se transmite íntegramente a todos los puntos.",vars:"F₁/A₁=F₂/A₂  →  F₂=F₁·(A₂/A₁)"},
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Mecánica de Fluidos: Hidrodinámica",diff:"med",label:"MEDIO",
+    machete:{
+      intro:"Estudio de fluidos en movimiento. Las dos leyes fundamentales son la Ecuación de Continuidad (conservación de masa) y Bernoulli (conservación de energía).",
+      sections:[
+        {title:"Ecuación de Continuidad",formulas:[
+          {eq:"A₁·v₁ = A₂·v₂  =  Q = constante",name:"Continuidad (fluido incompresible)",desc:"El caudal Q es constante a lo largo de un tubo. Donde se estrecha, va más rápido.",vars:"A=sección transversal [m²] · v=velocidad [m/s] · Q=caudal [m³/s]"},
+          {eq:"Q = A·v",name:"Caudal volumétrico",desc:"Volumen de fluido que pasa por sección A por unidad de tiempo.",vars:""},
+        ]},
+        {title:"Ecuación de Bernoulli",formulas:[
+          {eq:"P + ½·ρ·v² + ρ·g·h = constante",name:"Bernoulli (entre dos puntos)",desc:"Conservación de energía por unidad de volumen en fluido ideal.",vars:"P=presión · ρ=densidad · v=velocidad · h=altura"},
+          {eq:"P₁ + ½·ρ·v₁² + ρ·g·h₁ = P₂ + ½·ρ·v₂² + ρ·g·h₂",name:"Bernoulli entre puntos 1 y 2",desc:"Forma de aplicación más común.",vars:"Fluido ideal: incompresible, sin viscosidad, flujo estacionario"},
+        ]},
+        {title:"Casos especiales de Bernoulli",formulas:[
+          {eq:"v = √(2·g·h)  (Torricelli)",name:"Velocidad de eflujo",desc:"Velocidad del fluido que sale por un orificio en el fondo de un tanque.",vars:"h=altura de la superficie libre sobre el orificio"},
+          {eq:"P₁−P₂ = ½·ρ·(v₂²−v₁²)  (h=constante)",name:"Mismo nivel de altura",desc:"En tuberías horizontales, donde aumenta v, disminuye P (efecto Venturi).",vars:""},
+        ]},
+        {title:"Consejos clave",tips:[
+          "<b>Bernoulli requiere</b> fluido ideal (sin viscosidad), incompresible y flujo estacionario.",
+          "<b>En el fondo de un tanque grande:</b> v₁≈0 (superficie libre) y P₁=P_atm, P₂=P_atm → Torricelli.",
+          "<b>Efecto Venturi:</b> donde el tubo se estrecha (A↓), v↑ y P↓.",
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Movimiento Armónico",diff:"med",label:"MEDIO",
+    machete:{
+      intro:"El Movimiento Armónico Simple (MAS) describe oscilaciones. La fuerza restauradora es proporcional al desplazamiento: F=−kx.",
+      sections:[
+        {title:"Cinemática del MAS",formulas:[
+          {eq:"x(t) = A·cos(ω·t + φ)",name:"Posición en función del tiempo",desc:"A=amplitud (desplazamiento máximo), φ=fase inicial.",vars:"A [m] · ω=frecuencia angular [rad/s] · φ=fase inicial [rad]"},
+          {eq:"v(t) = −A·ω·sin(ω·t + φ)",name:"Velocidad",desc:"Derivada de x(t).",vars:"v_max = A·ω  (en x=0)"},
+          {eq:"a(t) = −A·ω²·cos(ω·t + φ) = −ω²·x",name:"Aceleración",desc:"Proporcional y opuesta al desplazamiento.",vars:"a_max = A·ω²  (en x=±A)"},
+          {eq:"v = ±ω·√(A²−x²)",name:"Velocidad en función de posición",desc:"Máxima en x=0, cero en x=±A.",vars:""},
+        ]},
+        {title:"Periodo y Frecuencia",formulas:[
+          {eq:"ω = √(k/m)  →  T = 2π/ω  →  f = 1/T",name:"Resorte masa-resorte",desc:"La frecuencia no depende de la amplitud.",vars:"k=constante del resorte [N/m] · m=masa [kg] · T=período [s]"},
+          {eq:"T = 2π·√(I/m·g·d)",name:"Péndulo Físico",desc:"Válido para ángulos pequeños (θ<15°) en cuerpos rígidos.",vars:"I=momento de inercia · m=masa · g=9.8 m/s² · d=distancia"},
+          {eq:"T = 2π·√(L/g)",name:"Péndulo Simple",desc:"Válido para ángulos pequeños (θ<15°) en masas.",vars:"L=longitud del péndulo · g=9.8 m/s² · NO depende de la masa"},
+        ]},
+        {title:"Energía en el MAS",formulas:[
+          {eq:"Ep = ½·k·x²",name:"Energía potencial elástica",desc:"Máxima en los extremos (x=±A).",vars:""},
+          {eq:"Ec = ½·m·v²",name:"Energía cinética",desc:"Máxima en el centro (x=0).",vars:""},
+          {eq:"Em = ½·k·A²  =  ½·m·(ω·A)²  =  constante",name:"Energía mecánica total (conservada)",desc:"La energía oscila entre cinética y potencial.",vars:""},
+        ]},
+        {title:"Consejos clave",tips:[
+          "<b>En x=0:</b> v=máxima, a=0, Ec=máxima, Ep=0.",
+          "<b>En x=±A:</b> v=0, a=máxima, Ec=0, Ep=máxima.",
+          "<b>El período del péndulo</b> NO depende de la amplitud (para ángulos pequeños).",
+        ]},
+      ]
+    }
+  },
+  {
+    name:"Óptica",diff:"med",label:"MEDIO",
+    machete:{
+      intro:"Óptica geométrica: reflexión, refracción y formación de imágenes con lentes y espejos usando la ley de Snell y la ecuación de lentes delgadas.",
+      sections:[
+        {title:"Reflexión",formulas:[
+          {eq:"θᵢ = θᵣ",name:"Ley de reflexión",desc:"El ángulo de incidencia iguala al ángulo de reflexión, ambos medidos desde la normal.",vars:"θᵢ=ángulo incidente · θᵣ=ángulo reflejado · ambos medidos desde la normal a la superficie"},
+        ]},
+        {title:"Refracción — Ley de Snell",formulas:[
+          {eq:"n₁·sin(θ₁) = n₂·sin(θ₂)",name:"Ley de Snell",desc:"La luz cambia de dirección al pasar entre medios con distinto índice de refracción.",vars:"n₁, n₂=índices de refracción · θ₁, θ₂=ángulos respecto a la normal"},
+          {eq:"n = c/v",name:"Índice de refracción",desc:"Relación entre velocidad de la luz en vacío y en el medio.",vars:"c=3×10⁸ m/s · n_agua≈1.33 · n_vidrio≈1.5 · n_aire≈1"},
+          {eq:"sin(θ_c) = n₂/n₁  (n₁>n₂)",name:"Ángulo crítico (reflexión total interna)",desc:"Si θ>θ_c, toda la luz se refleja (fibra óptica).",vars:"Solo ocurre cuando la luz va de mayor a menor índice"},
+        ]},
+        {title:"Lentes delgadas y espejos",formulas:[
+          {eq:"1/f = 1/dₒ + 1/dᵢ",name:"Ecuación de lentes/espejos",desc:"Relaciona distancia focal, objeto e imagen.",vars:"f=distancia focal · dₒ=distancia del objeto · dᵢ=distancia de la imagen"},
+          {eq:"M = −dᵢ/dₒ = hᵢ/hₒ",name:"Amplificación lateral",desc:"Razón entre el tamaño de imagen y objeto.",vars:"M>0: imagen derecha · M<0: imagen invertida · |M|>1: ampliada"},
+          {eq:"f > 0: lente convergente (convexa)",name:"Signo de la focal",desc:"Lente convergente forma imágenes reales si dₒ>f.",vars:"f < 0: lente divergente (cóncava) → siempre imagen virtual y reducida"},
+        ]},
+        {title:"Convenio de signos",tips:[
+          "<b>dₒ > 0</b> siempre (objeto real del lado de entrada de la luz).",
+          "<b>dᵢ > 0</b>: imagen real (mismo lado que la luz saliente en lentes, o mismo lado que el objeto en espejos).",
+          "<b>dᵢ < 0</b>: imagen virtual (lado contrario en lentes).",
+          "<b>En espejos:</b> cóncavo f>0, convexo f<0.",
+        ]},
+      ]
+    }
+  },
+];
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+const LS_KEY="f1_apikey_v3",LS_PROV="f1_prov_v3",LS_HIST="f1_hist_v4";
+let apiKey="",provider="anthropic",cur=null,mode="explicar",hist=[],done=new Set(),streak=0,busy=false;
+
+// ── SETUP ──
+let noAI=false;
+function startNoAI(){
+  noAI=true;
+  document.getElementById("setup-screen").style.display="none";
+  const m=document.getElementById("main-app"); m.style.display="flex";
+  document.getElementById("prov-badge").textContent="📐 SIN IA";
+  document.getElementById("prov-badge").style.background="rgba(255,184,0,.08)";
+  document.getElementById("prov-badge").style.borderColor="rgba(255,184,0,.2)";
+  document.getElementById("prov-badge").style.color="var(--accent2)";
+  loadState(); renderSidebar();
+}
+
+function selProv(id){
+  provider=id;
+  document.querySelectorAll(".provider-btn").forEach(b=>b.classList.toggle("selected",b.dataset.id===id));
+}
+function startApp(){
+  const k=document.getElementById("api-key-input").value.trim();
+  if(!k){alert("Pegá tu API Key primero.");return;}
+  apiKey=k; localStorage.setItem(LS_KEY,k); localStorage.setItem(LS_PROV,provider);
+  showApp();
+}
+function showApp(){
+  document.getElementById("setup-screen").style.display="none";
+  const m=document.getElementById("main-app"); m.style.display="flex";
+  document.getElementById("prov-badge").textContent=PROVIDERS[provider].emoji+" "+PROVIDERS[provider].name;
+  loadState(); renderSidebar();
+}
+function resetKey(){localStorage.removeItem(LS_KEY);location.reload();}
+
+window.addEventListener("load",()=>{
+  const k=localStorage.getItem(LS_KEY);
+  const p=localStorage.getItem(LS_PROV)||"anthropic";
+  if(k){apiKey=k;provider=p;showApp();}
+});
+
+// ── STATE PERSISTENCE ──
+function saveHist(){
+  try{
+    const all=JSON.parse(localStorage.getItem(LS_HIST)||"{}");
+    if(cur!==null) all["t"+cur]=hist;
+    all.__done=Array.from(done); all.__streak=streak;
+    localStorage.setItem(LS_HIST,JSON.stringify(all));
+  }catch(e){}
+}
+function loadState(){
+  try{
+    const all=JSON.parse(localStorage.getItem(LS_HIST)||"{}");
+    if(all.__done) done=new Set(all.__done.map(Number));
+    if(all.__streak) streak=all.__streak;
+    document.getElementById("streak-b").textContent=`🔥 RACHA: ${streak}`;
+  }catch(e){}
+}
+function clearHistory(){
+  if(!confirm("¿Borrar todo el historial?"))return;
+  localStorage.removeItem(LS_HIST);
+  done=new Set();streak=0;hist=[];cur=null;
+  document.getElementById("streak-b").textContent="🔥 RACHA: 0";
+  document.getElementById("welcome").style.display="flex";
+  document.getElementById("panel-chat").classList.remove("active");
+  document.getElementById("panel-machete").classList.remove("active");
+  document.getElementById("tbar").style.display="none";
+  document.getElementById("mode-tabs").style.display="none";
+  renderSidebar();
+}
+
+// ── SIDEBAR ──
+function renderSidebar(){
+  const l=document.getElementById("tema-list"); l.innerHTML="";
+  TEMAS.forEach((t,i)=>{
+    const b=document.createElement("button");
+    b.className="tbtn"+(cur===i?" active":"")+(done.has(i)?" done":"");
+    b.innerHTML=`<div class="tdot dot-${t.diff}"></div><span class="tname">${t.name}</span>${done.has(i)?'<span class="tcheck">✓</span>':""}`;
+    b.onclick=()=>selectTema(i); l.appendChild(b);
+  });
+  const pct=Math.round(done.size/16*100);
+  document.getElementById("prog-fill").style.width=pct+"%";
+  document.getElementById("prog-txt").textContent=`${done.size} / 16 temas`;
+}
+
+// ── SELECT TEMA ──
+function selectTema(i){
+  cur=i; mode="explicar";
+  try{const all=JSON.parse(localStorage.getItem(LS_HIST)||"{}"); hist=all["t"+i]||[];}catch(e){hist=[];}
+  document.getElementById("welcome").style.display="none";
+  document.getElementById("tbar").style.display="flex";
+  document.getElementById("mode-tabs").style.display="flex";
+  const t=TEMAS[i];
+  document.getElementById("tbar-name").textContent=t.name.toUpperCase();
+  const dt=document.getElementById("dtag"); dt.textContent=t.label; dt.className="dtag tag-"+t.diff;
+  ["tab-explicar","tab-ejercicio","tab-quiz"].forEach(id=>{
+    document.getElementById(id).style.display=noAI?"none":"";
+  });
+  updateTabs(); renderSidebar();
+  setTab(noAI?"machete":"machete");
+}
+
+// ── TABS ──
+function setTab(tab){
+  mode=tab; updateTabs();
+  // Hide all panels
+  ["panel-chat","panel-machete"].forEach(id=>{
+    document.getElementById(id).classList.remove("active");
+  });
+  if(tab==="machete"){
+    document.getElementById("panel-machete").classList.add("active");
+    renderMachete(cur);
+  } else {
+    document.getElementById("panel-chat").classList.add("active");
+    const msgs=document.getElementById("msgs"); msgs.innerHTML="";
+    hist.forEach(m=>{if(m.role!=="system")addMsgDOM(m.role,m.content);});
+    if(hist.length===0){
+      const initMsgs={
+        explicar:`Arrancamos con ${TEMAS[cur].name}. Explicame los conceptos clave con fórmulas en texto plano. Terminá con una pregunta para testearme.`,
+        ejercicio:`Dame un ejercicio numérico de ${TEMAS[cur].name} y resolvelo paso a paso.`,
+        quiz:`Haceme UNA pregunta de ${TEMAS[cur].name}. Solo la pregunta, sin la respuesta.`
+      };
+      callAI(initMsgs[tab],true);
+    } else if(tab!=="explicar" && hist.length>0){
+      const switchMsgs={
+        ejercicio:`Dame un ejercicio numérico de ${TEMAS[cur].name}.`,
+        quiz:`Haceme UNA pregunta de ${TEMAS[cur].name}. Solo la pregunta.`
+      };
+      callAI(switchMsgs[tab],true);
+    }
+  }
+}
+function updateTabs(){
+  ["explicar","ejercicio","quiz","machete"].forEach(t=>{
+    document.getElementById("tab-"+t).classList.toggle("active",mode===t);
+  });
+}
+
+// ── MACHETE RENDER ──
+function renderMachete(i){
+  const container=document.getElementById("machete-content");
+  if(i===null){container.innerHTML='<div class="no-topic">Elegí un tema para ver su machete.</div>';return;}
+  const t=TEMAS[i]; const m=t.machete;
+  let html=`<div class="mach-header"><div class="mach-title">📐 ${t.name.toUpperCase()}</div><div class="mach-sub">${m.intro}</div></div>`;
+  m.sections.forEach(sec=>{
+    html+=`<div class="mach-section"><div class="mach-section-title">${sec.title}</div>`;
+    if(sec.formulas){
+      html+=`<div class="formula-grid">`;
+      sec.formulas.forEach(f=>{
+        html+=`<div class="formula-card">
+          <div class="formula-eq">${f.eq}</div>
+          <div class="formula-name">${f.name}</div>
+          <div class="formula-desc">${f.desc}</div>
+          ${f.vars?`<div class="formula-vars"><span>→</span> ${f.vars}</div>`:""}
+        </div>`;
+      });
+      html+=`</div>`;
+    }
+    if(sec.tips){
+      sec.tips.forEach(tip=>{
+        html+=`<div class="tip-box"><div class="tip-box-title">💡 Consejo</div><p>${tip}</p></div>`;
+      });
+    }
+    html+=`</div>`;
+  });
+  container.innerHTML=html;
+}
+
+// ── AI CALL ──
+function sysPrompt(){
+  return `Sos un entrenador de Física 1 para un estudiante apurado para su examen final muy dificil. Tema: ${TEMAS[cur].name}.
+REGLAS: máximo 180 palabras · fórmulas en texto plano (F=m*a) · terminá con UNA pregunta o desafío · si responde bien: elogiá brevemente y (IMPORTANTE) subí dificultad · si responde mal: insultalo como si fueras un entrenador duro de boxeo`;
+}
+
+async function callAI(userMsg,isIntro=false){
+  if(busy)return; busy=true;
+  document.getElementById("sbtn").disabled=true;
+  if(!isIntro){addMsgDOM("user",userMsg); hist.push({role:"user",content:userMsg});}
+  const tid=addTyping();
+  const messages=isIntro?[{role:"user",content:userMsg}]:hist;
+  try{
+    let reply="";
+    if(provider==="anthropic"){
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+        headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
+        body:JSON.stringify({model:PROVIDERS.anthropic.model,max_tokens:1000,system:sysPrompt(),messages})});
+      const d=await r.json(); if(d.error)throw new Error(d.error.message);
+      reply=d.content.map(c=>c.text||"").join("");
+    } else if(provider==="openai"){
+      const r=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+apiKey},
+        body:JSON.stringify({model:PROVIDERS.openai.model,max_tokens:1000,messages:[{role:"system",content:sysPrompt()},...messages]})});
+      const d=await r.json(); if(d.error)throw new Error(d.error.message);
+      reply=d.choices[0].message.content;
+    } else if(provider==="gemini"){
+      const contents=messages.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]}));
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${PROVIDERS.gemini.model}:generateContent?key=${apiKey}`,{method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({system_instruction:{parts:[{text:sysPrompt()}]},contents,generationConfig:{maxOutputTokens:1000}})});
+      const d=await r.json(); if(d.error)throw new Error(d.error.message);
+      reply=d.candidates[0].content.parts.map(p=>p.text||"").join("");
+    } else if(provider==="groq"){
+      const r=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+apiKey},
+        body:JSON.stringify({model:PROVIDERS.groq.model,max_tokens:1000,messages:[{role:"system",content:sysPrompt()},...messages]})});
+      const d=await r.json(); if(d.error)throw new Error(d.error.message||JSON.stringify(d.error));
+      reply=d.choices[0].message.content;
+    } else if(provider==="xai"){
+      const r=await fetch("https://api.x.ai/v1/chat/completions",{method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+apiKey},
+        body:JSON.stringify({model:PROVIDERS.xai.model,max_tokens:1000,messages:[{role:"system",content:sysPrompt()},...messages]})});
+      const d=await r.json(); if(d.error)throw new Error(d.error.message||JSON.stringify(d.error));
+      reply=d.choices[0].message.content;
+    }
+    removeTyping(tid); addMsgDOM("ai",reply);
+    hist.push({role:"assistant",content:reply}); saveHist();
+    if(reply.includes("TEMA DOMINADO")){
+      done.add(cur); streak++;
+      document.getElementById("streak-b").textContent=`🔥 RACHA: ${streak}`;
+      saveHist(); renderSidebar();
+    }
+  }catch(e){
+    removeTyping(tid);
+    addMsgDOM("ai",`❌ Error: ${e.message}<br><small>Revisá tu API Key o tu conexión.</small>`);
+  }
+  busy=false; document.getElementById("sbtn").disabled=false;
+}
+
+// ── DOM HELPERS ──
+function addMsgDOM(role,text){
+  const msgs=document.getElementById("msgs");
+  const div=document.createElement("div"); div.className="msg"+(role==="user"?" user":"");
+  const av=document.createElement("div"); av.className="av "+(role==="ai"?"av-ai":"av-user");
+  av.textContent=role==="ai"?"F1":"TÚ";
+  const bbl=document.createElement("div"); bbl.className="bbl "+(role==="ai"?"bbl-ai":"bbl-user");
+  bbl.innerHTML=fmt(text);
+  div.appendChild(av); div.appendChild(bbl); msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+function fmt(t){
+  return t.replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/\*(.*?)\*/g,'<i>$1</i>')
+    .replace(/`(.*?)`/g,'<code>$1</code>').replace(/✓/g,'<span class="ok">✓</span>')
+    .replace(/❌/g,'<span class="bad">❌</span>').replace(/\n/g,'<br>');
+}
+let tc=0;
+function addTyping(){
+  const id="t"+(++tc); const msgs=document.getElementById("msgs");
+  const div=document.createElement("div"); div.className="msg"; div.id=id;
+  div.innerHTML=`<div class="av av-ai">F1</div><div class="bbl bbl-ai"><div class="typing-wrap"><div class="tdot2"></div><div class="tdot2"></div><div class="tdot2"></div></div></div>`;
+  msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; return id;
+}
+function removeTyping(id){const e=document.getElementById(id);if(e)e.remove();}
+function send(){
+  const inp=document.getElementById("inp"); const v=inp.value.trim();
+  if(!v||busy||cur===null)return;
+  inp.value=""; inp.style.height="42px"; callAI(v);
+}
+function handleKey(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}
+function autoResize(el){el.style.height="auto";el.style.height=Math.min(el.scrollHeight,110)+"px";}
+</script>
+</body>
+</html>
